@@ -6,7 +6,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Root-KernelSU%20%7C%20APatch%20%7C%20Magisk-success?style=for-the-badge&logo=android" alt="Supported Root Solutions">
-  <img src="https://img.shields.io/badge/Version-v1.0.0-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-v1.1.0-blue?style=for-the-badge" alt="Version">
 </p>
 
 ---
@@ -48,7 +48,7 @@ The module comes with a built-in modern dashboard accessible via the Action Menu
 
 ## Installation
 
-1. Download the latest `AutocutCharging-v1.0.0.zip` from the [Releases](https://github.com/thaliban04/Autocut-Charging-Infinix/releases) page.
+1. Download the latest `AutocutCharging-v1.1.0.zip` from the [Releases](https://github.com/thaliban04/Autocut-Charging-Infinix/releases) page.
 2. Open your Root Manager (KernelSU, APatch, or Magisk).
 3. Go to the **Modules** tab.
 4. Click **Install from Storage** and select the `.zip` file.

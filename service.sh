@@ -12,6 +12,7 @@ THRESHOLD_SCREEN_OFF=85
 THRESHOLD_SCREEN_ON=75
 RESUME_LEVEL=70
 TEMP_LIMIT=45
+CURRENT_LIMIT=0
 NOTIFY=1
 POLL_INTERVAL=60
 
@@ -32,6 +33,7 @@ vload_config() {
             THRESHOLD_SCREEN_ON)  THRESHOLD_SCREEN_ON="$v" ;;
             RESUME_LEVEL)         RESUME_LEVEL="$v" ;;
             TEMP_LIMIT)           TEMP_LIMIT="$v" ;;
+            CURRENT_LIMIT)        CURRENT_LIMIT="$v" ;;
             NOTIFY)               NOTIFY="$v" ;;
             POLL_INTERVAL_CHARGING) POLL_INTERVAL="$v" ;;
             BYPASS_APPS)          BYPASS_APPS="$v" ;;
@@ -54,6 +56,25 @@ vnotify() {
 # Confirmed working paths
 VCHARGE_PATH="/sys/class/power_supply/charger/online"
 VBYPASS_PATH="/sys/devices/platform/charger/bypass_charger"
+VCURRENT_MAX_PATH="/sys/class/power_supply/charger/constant_charge_current"
+
+VSTATS_FILE="$MODPATH/bat_stats.csv"
+[ -f "$VSTATS_FILE" ] || echo "time,battery,temp" > "$VSTATS_FILE"
+
+vlog_stats() {
+    local t
+    t=$(date '+%H:%M')
+    echo "$t,$1,$2" >> "$VSTATS_FILE"
+    tail -n 61 "$VSTATS_FILE" > "${VSTATS_FILE}.tmp"
+    mv "${VSTATS_FILE}.tmp" "$VSTATS_FILE"
+}
+
+vapply_current_limit() {
+    # If 0, write a high value to reset (e.g. 3000mA = 3A) or ignore
+    local val=3000000
+    [ "$CURRENT_LIMIT" -gt 0 ] 2>/dev/null && val=$(( CURRENT_LIMIT * 1000 ))
+    echo "$val" > "$VCURRENT_MAX_PATH" 2>/dev/null
+}
 
 # Standard cutoff (uses online node)
 vcut()    { echo 0 > "$VCHARGE_PATH" 2>/dev/null; }
@@ -175,6 +196,14 @@ while true; do
         fi
     else
         vupdate_desc "Standby | ${BAT}% | ${TEMP}°C"
+    fi
+
+    # Log stats for WebUI Chart
+    vlog_stats "$BAT" "$TEMP"
+
+    # Apply Current Limiter if charging
+    if [ "$STATUS" = "Charging" ] && [ "$VCUT_ACTIVE" = "0" ]; then
+        vapply_current_limit
     fi
 
     sleep "$POLL_INTERVAL"

@@ -104,7 +104,7 @@ async function writeFile(p, lines) {
 // ── Config ────────────────────────────────────────────────────────────────────
 const DEFAULTS = {
   ENABLED: '1', THRESHOLD_SCREEN_OFF: '85', THRESHOLD_SCREEN_ON: '75',
-  RESUME_LEVEL: '70', TEMP_LIMIT: '45', NOTIFY: '1',
+  RESUME_LEVEL: '70', TEMP_LIMIT: '45', CURRENT_LIMIT: '0', NOTIFY: '1',
   POLL_INTERVAL_CHARGING: '60', POLL_INTERVAL_IDLE: '120',
   BYPASS_APPS: '',
 };
@@ -129,6 +129,7 @@ function buildConfLines(c) {
     `THRESHOLD_SCREEN_ON=${c.THRESHOLD_SCREEN_ON}`,
     `RESUME_LEVEL=${c.RESUME_LEVEL}`,
     `TEMP_LIMIT=${c.TEMP_LIMIT}`,
+    `CURRENT_LIMIT=${c.CURRENT_LIMIT}`,
     `NOTIFY=${c.NOTIFY}`,
     `POLL_INTERVAL_CHARGING=${c.POLL_INTERVAL_CHARGING}`,
     `POLL_INTERVAL_IDLE=${c.POLL_INTERVAL_IDLE}`,
@@ -147,7 +148,8 @@ const LS = {
 const $ = id => document.getElementById(id);
 const masterToggle = $('masterToggle'), sliderScreenOff = $('sliderScreenOff'),
   sliderScreenOn = $('sliderScreenOn'), sliderResume = $('sliderResume'),
-  sliderTemp = $('sliderTemp'), toggleNotify = $('toggleNotify'),
+  sliderTemp = $('sliderTemp'), sliderCurrentLimit = $('sliderCurrentLimit'),
+  toggleNotify = $('toggleNotify'),
   sliderPollCharging = $('sliderPollCharging'), sliderPollIdle = $('sliderPollIdle'),
   btnSave = $('btnSave'), btnRefreshLog = $('btnRefreshLog'),
   toastEl = $('toast'), logViewer = $('logViewer'), body = document.body;
@@ -157,6 +159,7 @@ const displays = {
   sliderScreenOn: { el: $('valScreenOn'), suffix: '%' },
   sliderResume: { el: $('valResume'), suffix: '%' },
   sliderTemp: { el: $('valTemp'), suffix: '°C' },
+  sliderCurrentLimit: { el: $('valCurrentLimit'), suffix: ' mA' },
   sliderPollCharging: { el: $('valPollCharging'), suffix: 's' },
   sliderPollIdle: { el: $('valPollIdle'), suffix: 's' },
 };
@@ -217,6 +220,17 @@ masterToggle.addEventListener('change', () => {
   saveConfig();
 });
 
+// Auto-save toggleNotify
+toggleNotify.addEventListener('change', saveConfig);
+
+// Debounced auto-save for sliders
+let saveTO;
+const debouncedSave = () => { clearTimeout(saveTO); saveTO = setTimeout(saveConfig, 1000); };
+Object.keys(displays).forEach(id => {
+  const el = $(id);
+  if (el) el.addEventListener('change', debouncedSave);
+});
+
 let toastTO;
 function showToast(msg) {
   toastEl.textContent = msg; toastEl.classList.add('show');
@@ -235,6 +249,7 @@ function applyConf(conf) {
   setS(sliderScreenOn, 'THRESHOLD_SCREEN_ON');
   setS(sliderResume, 'RESUME_LEVEL');
   setS(sliderTemp, 'TEMP_LIMIT');
+  setS(sliderCurrentLimit, 'CURRENT_LIMIT');
   setS(sliderPollCharging, 'POLL_INTERVAL_CHARGING');
   setS(sliderPollIdle, 'POLL_INTERVAL_IDLE');
   toggleNotify.checked = get('NOTIFY') !== '0';
@@ -321,6 +336,7 @@ async function saveConfig() {
     ENABLED: masterToggle.checked ? '1' : '0',
     THRESHOLD_SCREEN_OFF: sliderScreenOff.value, THRESHOLD_SCREEN_ON: sliderScreenOn.value,
     RESUME_LEVEL: sliderResume.value, TEMP_LIMIT: sliderTemp.value,
+    CURRENT_LIMIT: sliderCurrentLimit.value,
     NOTIFY: toggleNotify.checked ? '1' : '0',
     POLL_INTERVAL_CHARGING: sliderPollCharging.value, POLL_INTERVAL_IDLE: sliderPollIdle.value,
     BYPASS_APPS: bypassApps.join(','),
@@ -333,12 +349,86 @@ async function saveConfig() {
 }
 btnSave.addEventListener('click', saveConfig);
 
+// ── Battery Chart (Pure SVG) ──────────────────────────────────────────────────
+async function renderSVGChart() {
+  const container = $('chartContainer');
+  if (!container) return;
+  const raw = await readFile('/data/adb/modules/AutocutChargingAI/bat_stats.csv');
+  if (!raw || raw.errno) return;
+  
+  const lines = raw.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('time'));
+  if (lines.length < 2) {
+    container.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:12px;padding-top:40px;">Not enough data yet</div>';
+    return;
+  }
+
+  // Parse Data
+  const data = lines.map(l => {
+    const p = l.split(',');
+    return { time: p[0], bat: parseInt(p[1]), temp: parseInt(p[2]) };
+  });
+
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  if (w === 0 || h === 0) return;
+  
+  const padX = 30, padY = 15;
+  const innerW = w - padX * 2;
+  const innerH = h - padY * 2;
+  
+  // Math bounds
+  const xStep = innerW / (data.length - 1 || 1);
+  const maxBat = 100, minBat = 0;
+  
+  // Dynamic temp bounds for better visibility
+  const temps = data.map(d => d.temp);
+  const minT = Math.min(...temps) - 2;
+  const maxT = Math.max(...temps) + 2;
+  const maxTemp = Math.max(50, maxT), minTemp = Math.min(20, minT);
+
+  const getY = (val, min, max) => padY + innerH - ((val - min) / (max - min)) * innerH;
+
+  // Build Paths
+  let dBat = '', dTemp = '';
+  data.forEach((d, i) => {
+    const x = padX + i * xStep;
+    const yB = getY(d.bat, minBat, maxBat);
+    const yT = getY(d.temp, minTemp, maxTemp);
+    if (i === 0) { dBat += `M${x},${yB} `; dTemp += `M${x},${yT} `; }
+    else { dBat += `L${x},${yB} `; dTemp += `L${x},${yT} `; }
+  });
+
+  // Build SVG String
+  const svg = `
+    <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+      <!-- Grid lines -->
+      <line x1="${padX}" y1="${padY}" x2="${w-padX}" y2="${padY}" stroke="#ffffff15" stroke-dasharray="2,2"/>
+      <line x1="${padX}" y1="${padY + innerH/2}" x2="${w-padX}" y2="${padY + innerH/2}" stroke="#ffffff15" stroke-dasharray="2,2"/>
+      <line x1="${padX}" y1="${padY + innerH}" x2="${w-padX}" y2="${padY + innerH}" stroke="#ffffff15"/>
+      
+      <!-- Axis Labels (Y) -->
+      <text x="${padX - 5}" y="${padY + 4}" fill="#ffffff60" font-size="9" text-anchor="end">100%</text>
+      <text x="${padX - 5}" y="${padY + innerH + 4}" fill="#ffffff60" font-size="9" text-anchor="end">0%</text>
+      
+      <!-- Axis Labels (X) First and Last -->
+      <text x="${padX}" y="${h - 2}" fill="#ffffff60" font-size="9" text-anchor="middle">${data[0].time}</text>
+      <text x="${w - padX}" y="${h - 2}" fill="#ffffff60" font-size="9" text-anchor="middle">${data[data.length-1].time}</text>
+
+      <!-- Paths -->
+      <path d="${dBat}" fill="none" stroke="#0a84ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 4px rgba(10,132,255,0.4));"/>
+      <path d="${dTemp}" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+  container.innerHTML = svg;
+}
+
 async function loadStatus() {
-  const [batR, tmpR, stR, cutR] = await Promise.all([
+  const [batR, tmpR, stR, cutR, curR] = await Promise.all([
     sh('cat /sys/class/power_supply/battery/capacity 2>/dev/null'),
     sh('cat /sys/class/power_supply/battery/temp 2>/dev/null'),
     sh('cat /sys/class/power_supply/battery/status 2>/dev/null'),
     sh(`cat '${FLAG}' 2>/dev/null || echo 0`),
+    sh('cat /sys/class/power_supply/battery/current_now 2>/dev/null || cat /sys/class/power_supply/charger/current_now 2>/dev/null'),
   ]);
   const bat = parseInt(batR.stdout) || 0;
   const temp = Math.round((parseInt(tmpR.stdout) || 250) / 10);
@@ -365,8 +455,23 @@ async function loadStatus() {
   }
   set('statTemp', temp + '°C');
   col('statTemp', temp >= parseInt(sliderTemp.value) ? 'var(--danger)' : 'var(--text-primary)');
-  const chg = status === 'Charging';
-  set('statCharge', status); col('statCharge', chg ? 'var(--success)' : 'var(--text-secondary)');
+  
+  // Render Chart
+  renderSVGChart();
+
+  let chg = status === 'Charging';
+  let statusText = status;
+  
+  if (chg && curR && curR.stdout) {
+    const rawCur = parseInt(curR.stdout.trim());
+    if (!isNaN(rawCur) && rawCur !== 0) {
+      // Convert microamps to milliamps if needed
+      const ma = Math.abs(rawCur > 50000 || rawCur < -50000 ? Math.round(rawCur / 1000) : rawCur);
+      statusText = `Charging (${ma} mA)`;
+    }
+  }
+
+  set('statCharge', statusText); col('statCharge', chg ? 'var(--success)' : 'var(--text-secondary)');
   const ic = $('statChargeIcon');
   if (ic) {
     ic.innerHTML = chg

@@ -21,7 +21,7 @@
         </div>
         <div class="header-text">
           <h1>Autocut Charging</h1>
-          <p class="header-sub">by thaliban04 · v1.0.0</p>
+          <p class="header-sub">by thaliban04 · v1.1.0</p>
         </div>
       </div>
       <div class="master-toggle-wrap">
@@ -98,6 +98,18 @@
       <div class="status-updated" id="statusUpdated">Refreshing…</div>
     </section>
 
+    <!-- Battery Analytics Card -->
+    <section class="card">
+      <div class="card-title">Battery Analytics</div>
+      <div class="chart-container" id="chartContainer" style="height: 120px; width: 100%; margin: 10px 0; position: relative;">
+        <!-- SVG Chart injected via JS -->
+      </div>
+      <div class="battery-legend">
+        <div class="legend-item"><span class="dot dot-on"></span> Battery %</div>
+        <div class="legend-item"><span class="dot temp-dot" style="background: #ef4444;"></span> Temp °C</div>
+      </div>
+    </section>
+
     <!-- Charging Thresholds Card -->
     <section class="card">
       <div class="card-title">Charging Thresholds</div>
@@ -128,7 +140,19 @@
 
     <!-- Resume & Temperature Card -->
     <section class="card">
-      <div class="card-title">Protection</div>
+      <div class="card-title">Protection & Limits</div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-name">Charge Speed Limit (mA)</div>
+          <div class="setting-desc">Slow charge (0 = unlimited)</div>
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-value" id="valCurrentLimit">0</div>
+          <input type="range" class="range-slider" id="sliderCurrentLimit" min="0" max="3000" step="100" value="0" />
+          <div class="slider-limits"><span>0</span><span>3000</span></div>
+        </div>
+      </div>
+      <div class="divider"></div>
       <div class="setting-row">
         <div class="setting-info">
           <div class="setting-name">Resume level</div>
