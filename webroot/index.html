@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Autocut Charging</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="header-logo">
+        <div class="logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+          </svg>
+        </div>
+        <div class="header-text">
+          <h1>Autocut Charging</h1>
+          <p class="header-sub">by thaliban04 · v1.0.0</p>
+        </div>
+      </div>
+      <div class="master-toggle-wrap">
+        <label class="toggle-switch" id="masterToggleLabel">
+          <input type="checkbox" id="masterToggle" />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Live Status Card -->
+    <section class="card status-card" id="statusCard">
+      <div class="card-title">Live Status</div>
+      <div class="status-grid">
+        <div class="stat-box">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="7" width="16" height="10" rx="2" ry="2" />
+              <line x1="22" y1="11" x2="22" y2="13" />
+            </svg>
+          </div>
+          <div class="stat-value" id="statBattery">—%</div>
+          <div class="stat-label">Battery</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />
+            </svg>
+          </div>
+          <div class="stat-value" id="statTemp">—°C</div>
+          <div class="stat-label">Temperature</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-icon" id="statChargeIcon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+          </div>
+          <div class="stat-value" id="statCharge">—</div>
+          <div class="stat-label">Charging</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="10" y1="15" x2="10" y2="9" />
+              <line x1="14" y1="15" x2="14" y2="9" />
+            </svg>
+          </div>
+          <div class="stat-value" id="statCut">—</div>
+          <div class="stat-label">Cut Active</div>
+        </div>
+      </div>
+      <div class="battery-visual">
+        <div class="battery-body">
+          <div class="battery-level" id="batteryBarFill">
+            <div class="battery-stripes" id="batteryStripes"></div>
+          </div>
+          <div class="battery-text" id="batteryText">—%</div>
+          <div class="battery-markers" id="batteryBarMarkers"></div>
+        </div>
+        <div class="battery-cap"></div>
+      </div>
+      
+      <div class="battery-legend">
+        <div class="legend-item"><span class="dot dot-off"></span> Screen OFF Cut</div>
+        <div class="legend-item"><span class="dot dot-on"></span> Screen ON Cut</div>
+        <div class="legend-item"><span class="dot dot-res"></span> Resume Level</div>
+      </div>
+      <div class="status-updated" id="statusUpdated">Refreshing…</div>
+    </section>
+
+    <!-- Charging Thresholds Card -->
+    <section class="card">
+      <div class="card-title">Charging Thresholds</div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-name">Screen OFF threshold</div>
+          <div class="setting-desc">Cut charging when screen is off</div>
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-value" id="valScreenOff">85%</div>
+          <input type="range" class="range-slider" id="sliderScreenOff" min="50" max="100" step="1" value="85" />
+          <div class="slider-limits"><span>50%</span><span>100%</span></div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-name">Screen ON threshold</div>
+          <div class="setting-desc">Cut charging when screen is on</div>
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-value" id="valScreenOn">75%</div>
+          <input type="range" class="range-slider" id="sliderScreenOn" min="50" max="100" step="1" value="75" />
+          <div class="slider-limits"><span>50%</span><span>100%</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Resume & Temperature Card -->
+    <section class="card">
+      <div class="card-title">Protection</div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-name">Resume level</div>
+          <div class="setting-desc">Restart charging when battery drops here</div>
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-value" id="valResume">70%</div>
+          <input type="range" class="range-slider" id="sliderResume" min="20" max="90" step="1" value="70" />
+          <div class="slider-limits"><span>20%</span><span>90%</span></div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-name">Temperature limit</div>
+          <div class="setting-desc">Pause charging above this temperature</div>
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-value temp-val" id="valTemp">45°C</div>
+          <input type="range" class="range-slider" id="sliderTemp" min="35" max="60" step="1" value="45" />
+          <div class="slider-limits"><span>35°C</span><span>60°C</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Advanced Settings Card -->
+    <section class="card">
+      <div class="card-title">Advanced</div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-name">Notifications</div>
+          <div class="setting-desc">Show charging event notifications</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="toggleNotify" checked />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="divider"></div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-name">Poll interval (charging)</div>
+          <div class="setting-desc">Check frequency when charger connected</div>
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-value" id="valPollCharging">30s</div>
+          <input type="range" class="range-slider" id="sliderPollCharging" min="10" max="120" step="5" value="30" />
+          <div class="slider-limits"><span>10s</span><span>120s</span></div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-name">Poll interval (idle)</div>
+          <div class="setting-desc">Check frequency when no charger</div>
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-value" id="valPollIdle">120s</div>
+          <input type="range" class="range-slider" id="sliderPollIdle" min="30" max="300" step="10" value="120" />
+          <div class="slider-limits"><span>30s</span><span>300s</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bypass Apps Card -->
+    <section class="card">
+      <div class="card-title">Per-App Bypass Charging</div>
+      <div class="setting-desc" style="margin-bottom: 12px; color: var(--text-secondary);">
+        Force bypass charging when selected apps are active (e.g. Games).
+      </div>
+      <input type="text" id="bypassSearch" class="search-input" placeholder="Search apps..." />
+      <div class="app-list" id="appList">
+        <div style="text-align: center; color: var(--text-muted); font-size: 12px; padding: 20px;">Loading apps...</div>
+      </div>
+    </section>
+
+    <!-- Save Button -->
+    <button class="btn-save" id="btnSave">
+      <span class="btn-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+          <polyline points="17 21 17 13 7 13 7 21" />
+          <polyline points="7 3 7 8 15 8" />
+        </svg>
+      </span> Save & Apply
+    </button>
+
+    <!-- Toast feedback -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Log Viewer Card -->
+    <section class="card log-card">
+      <div class="card-title-row">
+        <div class="card-title">Service Log</div>
+        <button class="btn-refresh" id="btnRefreshLog">↺ Refresh</button>
+      </div>
+      <pre class="log-viewer" id="logViewer">Loading log…</pre>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+
+</html>

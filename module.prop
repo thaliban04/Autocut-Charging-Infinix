@@ -1,0 +1,7 @@
+id=AutocutChargingAI
+name=Autocut Charging
+version=v1.0.0
+versionCode=100
+author=thaliban04
+description=Smart battery protection: auto-cut & resume charging, temperature guard, configurable thresholds. Configure via WebUI in KernelSU/APatch.
+updateJson=https://raw.githubusercontent.com/thaliban04/Autocut-Charging-Infinix/main/update.json
