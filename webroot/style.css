@@ -106,10 +106,26 @@ body {
 .container {
   max-width: 600px;
   margin: 0 auto;
-  padding: 24px 16px 60px;
+  padding: 24px 16px 100px; /* Space for bottom nav */
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.tab-pane {
+  display: none;
+  animation: fadeIn 0.3s ease;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.tab-pane.active {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Cards ────────────────────────────────────────────────────────────────── */
@@ -711,4 +727,50 @@ body {
   .setting-row {
     gap: 12px;
   }
+}
+
+/* ── Bottom Navigation ───────────────────────────────────────────────────── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 64px;
+  background: rgba(17, 17, 19, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex: 1;
+  height: 100%;
+  transition: all 0.2s ease;
+}
+
+.nav-item.active {
+  color: var(--accent);
+}
+
+.nav-item svg {
+  transition: transform 0.2s ease;
+}
+
+.nav-item.active svg {
+  transform: scale(1.1);
+}
+
+.nav-item span {
+  font-size: 10px;
+  font-weight: 500;
 }

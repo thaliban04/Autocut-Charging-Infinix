@@ -231,6 +231,21 @@ Object.keys(displays).forEach(id => {
   if (el) el.addEventListener('change', debouncedSave);
 });
 
+// Tab Navigation Logic
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    // Remove active from all nav items and panes
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    
+    // Add active to clicked nav item and corresponding pane
+    btn.classList.add('active');
+    const targetId = btn.getAttribute('data-target');
+    const targetPane = $(targetId);
+    if (targetPane) targetPane.classList.add('active');
+  });
+});
+
 let toastTO;
 function showToast(msg) {
   toastEl.textContent = msg; toastEl.classList.add('show');
@@ -462,12 +477,16 @@ async function loadStatus() {
   let chg = status === 'Charging';
   let statusText = status;
   
-  if (chg && curR && curR.stdout) {
+  if (curR && curR.stdout) {
     const rawCur = parseInt(curR.stdout.trim());
     if (!isNaN(rawCur) && rawCur !== 0) {
       // Convert microamps to milliamps if needed
       const ma = Math.abs(rawCur > 50000 || rawCur < -50000 ? Math.round(rawCur / 1000) : rawCur);
-      statusText = `Charging (${ma} mA)`;
+      if (chg) {
+        statusText = `Charging (${ma} mA)`;
+      } else if (status === 'Discharging' || status === 'Not charging') {
+        statusText = `Discharging (-${ma} mA)`;
+      }
     }
   }
 

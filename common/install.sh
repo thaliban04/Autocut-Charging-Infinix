@@ -5,7 +5,7 @@ ui_print " "
 ui_print "  ╔════════════════════════════════════╗"
 ui_print "  ║         A U T O C U T              ║"
 ui_print "  ║           C H A R G I N G          ║"
-ui_print "  ║               v1.1.0               ║"
+ui_print "  ║               v1.1.1               ║"
 ui_print "  ╚════════════════════════════════════╝"
 ui_print " "
 ui_print "       Premium Battery Management "
@@ -39,7 +39,7 @@ else
     if [ "$conf_size" -le 2 ]; then
         # Old format — restore default
         cp -f "$MODPATH/autocut.conf.bak" "$MODPATH/autocut.conf" 2>/dev/null || true
-        ui_print "       └─ Upgraded legacy configuration to v1.1.0."
+        ui_print "       └─ Upgraded legacy configuration to v1.1.1."
     else
         ui_print "       └─ Preserved existing user preferences."
     fi
@@ -51,7 +51,7 @@ ui_print " "
 
 # Initialize log
 [ -f "$MODPATH/autocut.log" ] || \
-    echo "$(date '+%Y-%m-%d %H:%M:%S') | INFO: Autocut Charging v1.1.0 installed" \
+    echo "$(date '+%Y-%m-%d %H:%M:%S') | INFO: Autocut Charging v1.1.1 installed" \
     > "$MODPATH/autocut.log"
 
 ui_print " "
